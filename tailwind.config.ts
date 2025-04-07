@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,15 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Colores específicos para la aplicación
+				atc: {
+					blue: '#0057b7',     // Azul principal
+					lightBlue: '#00a8e8', // Azul claro
+					yellow: '#ffd700',    // Amarillo principal
+					darkYellow: '#e6c200', // Amarillo oscuro
+					darkBg: '#1a2b3c',    // Fondo oscuro
+					lightBg: '#f0f8ff',   // Fondo claro
 				}
 			},
 			borderRadius: {
@@ -84,11 +94,22 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'ping-slow': {
+					'0%': { transform: 'scale(1)', opacity: '1' },
+					'50%': { transform: 'scale(1.5)', opacity: '0.5' },
+					'100%': { transform: 'scale(2)', opacity: '0' }
+				},
+				'pulse-radar': {
+					'0%': { transform: 'rotate(0deg)' },
+					'100%': { transform: 'rotate(360deg)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'ping-slow': 'ping-slow 3s cubic-bezier(0, 0, 0.2, 1) infinite',
+				'pulse-radar': 'pulse-radar 4s linear infinite'
 			}
 		}
 	},
