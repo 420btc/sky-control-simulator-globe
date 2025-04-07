@@ -1,10 +1,11 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker, Polyline } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Icon } from 'leaflet';
 import FlightApi, { Flight, Airport } from '@/services/flightApi';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 // Soluciona el problema con los iconos en React Leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -32,6 +33,8 @@ const WorldMap: React.FC<WorldMapProps> = ({
 }) => {
   const [flights, setFlights] = useState<Flight[]>([]);
   const [airports, setAirports] = useState<Airport[]>([]);
+  const [visibleRoutes, setVisibleRoutes] = useState<Record<string, number[]>>({});
+  const prevFlightsRef = useRef<Flight[]>([]);
   const navigate = useNavigate();
   const api = FlightApi.getInstance();
   
@@ -39,20 +42,72 @@ const WorldMap: React.FC<WorldMapProps> = ({
     // Iniciar la API y obtener datos iniciales
     api.startUpdates();
     setAirports(api.getAllAirports());
-    setFlights(api.getAllFlights());
+    const initialFlights = api.getAllFlights();
+    setFlights(initialFlights);
+    
+    // Inicializar las rutas visibles (al principio ninguna es visible)
+    const initialRoutes: Record<string, number[]> = {};
+    initialFlights.forEach(flight => {
+      initialRoutes[flight.id] = [];
+    });
+    setVisibleRoutes(initialRoutes);
     
     // Actualizar los datos cada 5 segundos
     const interval = setInterval(() => {
-      setFlights([...api.getAllFlights()]);
+      const updatedFlights = api.getAllFlights();
+      setFlights([...updatedFlights]);
+      
+      // Detectar nuevos vuelos para mostrar notificaciones
+      const prevFlightIds = new Set(prevFlightsRef.current.map(f => f.id));
+      updatedFlights.forEach(flight => {
+        if (!prevFlightIds.has(flight.id)) {
+          // Nuevo vuelo detectado
+          toast.info(`Nuevo vuelo detectado: ${flight.callsign} (${flight.origin} → ${flight.destination})`, {
+            duration: 3000,
+          });
+          
+          // Crear entrada para su ruta (inicialmente vacía)
+          setVisibleRoutes(prev => ({
+            ...prev,
+            [flight.id]: []
+          }));
+        }
+      });
+      
+      // Actualizar referencia de vuelos previos
+      prevFlightsRef.current = updatedFlights;
     }, 5000);
+    
+    // Intervalo para ir revelando gradualmente las rutas
+    const routeInterval = setInterval(() => {
+      setVisibleRoutes(prev => {
+        const updated = { ...prev };
+        
+        flights.forEach(flight => {
+          if (flight.route && flight.route.length > 0) {
+            // Si la ruta aún no está completa, revelar un punto más
+            const currentVisible = updated[flight.id] || [];
+            if (currentVisible.length < flight.route.length) {
+              updated[flight.id] = [...currentVisible, currentVisible.length];
+            }
+          }
+        });
+        
+        return updated;
+      });
+    }, 1000); // Revelar un punto cada segundo
     
     return () => {
       clearInterval(interval);
+      clearInterval(routeInterval);
       api.stopUpdates();
     };
   }, []);
   
   const handleAirportClick = (airport: Airport) => {
+    // Reproducir efecto sonoro de "click" (simulado con console.log)
+    console.log("Airport selected sound would play here");
+    
     if (onSelectAirport) {
       onSelectAirport(airport.id);
     } else {
@@ -91,6 +146,17 @@ const WorldMap: React.FC<WorldMapProps> = ({
     );
   };
 
+  // Función para generar rutas parciales basadas en los puntos visibles
+  const getVisibleRoutePath = (flight: Flight): [number, number][] => {
+    if (!flight.route || !visibleRoutes[flight.id]) return [];
+    
+    const visiblePoints = visibleRoutes[flight.id];
+    return visiblePoints.map(i => {
+      const point = flight.route![i];
+      return [point[1], point[0]] as [number, number];
+    });
+  };
+
   return (
     <MapContainer 
       center={centerPosition} 
@@ -123,6 +189,17 @@ const WorldMap: React.FC<WorldMapProps> = ({
               <h3 className="font-bold">{airport.name}</h3>
               <p className="text-sm">Código IATA: {airport.iataCode}</p>
               <p className="text-xs">Pistas: {airport.runways}</p>
+              <div className="text-xs mt-1">
+                <span className="font-semibold">Nivel de tráfico: </span>
+                <span className="inline-flex items-center">
+                  {[...Array(10)].map((_, i) => (
+                    <span 
+                      key={i} 
+                      className={`w-1.5 h-3 mx-px ${i < airport.traffic ? 'bg-atc-blue' : 'bg-gray-200'}`}
+                    />
+                  ))}
+                </span>
+              </div>
               <button 
                 className="mt-2 px-3 py-1 bg-atc-blue text-white text-xs rounded hover:bg-atc-lightBlue transition-colors"
                 onClick={() => handleAirportClick(airport)}
@@ -187,10 +264,10 @@ const WorldMap: React.FC<WorldMapProps> = ({
             {getFlightIcon(flight)}
           </CircleMarker>
           
-          {/* Ruta del vuelo */}
-          {flight.route && (
+          {/* Ruta del vuelo (ahora se revela gradualmente) */}
+          {flight.route && visibleRoutes[flight.id] && visibleRoutes[flight.id].length > 1 && (
             <Polyline
-              positions={flight.route.map(coord => [coord[1], coord[0]])}
+              positions={getVisibleRoutePath(flight)}
               pathOptions={{ 
                 color: 
                   flight.status === 'enroute' ? '#0057b7' :
@@ -198,7 +275,8 @@ const WorldMap: React.FC<WorldMapProps> = ({
                   flight.status === 'takeoff' ? '#00a8e8' : 
                   '#ffffff',
                 opacity: 0.6,
-                weight: 2
+                weight: 2,
+                dashArray: flight.status === 'scheduled' ? '5, 5' : undefined
               }}
             />
           )}
