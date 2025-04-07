@@ -7,11 +7,12 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Label } from '@/components/ui/label';
 import { useAuth } from './AuthContext';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
 
 const LoginForm = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const { login, isLoading, error } = useAuth();
+  const { login, loginAsGuest, isLoading, error } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,7 +70,7 @@ const LoginForm = () => {
               </p>
             </div>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex flex-col space-y-4">
             <Button 
               type="submit" 
               className="w-full bg-atc-yellow hover:bg-atc-darkYellow text-black" 
@@ -77,6 +78,26 @@ const LoginForm = () => {
             >
               {isLoading ? 'Iniciando sesión...' : 'Iniciar sesión'}
             </Button>
+            
+            <div className="flex items-center w-full">
+              <Separator className="flex-1" />
+              <span className="px-2 text-xs text-muted-foreground">o</span>
+              <Separator className="flex-1" />
+            </div>
+            
+            <Button 
+              type="button"
+              variant="outline" 
+              className="w-full border-atc-blue/30 hover:bg-atc-blue/10 text-atc-blue"
+              onClick={loginAsGuest}
+              disabled={isLoading}
+            >
+              Acceder como invitado
+            </Button>
+            
+            <p className="text-xs text-center text-muted-foreground mt-2">
+              Credenciales de prueba: admin/admin123 o user/user123
+            </p>
           </CardFooter>
         </form>
       </Card>

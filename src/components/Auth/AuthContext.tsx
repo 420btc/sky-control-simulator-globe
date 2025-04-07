@@ -14,6 +14,7 @@ interface AuthContextType {
   currentUser: User | null;
   isLoading: boolean;
   login: (username: string, password: string) => Promise<boolean>;
+  loginAsGuest: () => void;
   logout: () => void;
   error: string | null;
 }
@@ -87,6 +88,25 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     });
   };
 
+  const loginAsGuest = () => {
+    setIsLoading(true);
+    setError(null);
+    
+    // Crear un usuario invitado
+    const guestUser: User = {
+      id: 'guest-' + Date.now(),
+      username: 'Invitado',
+      role: 'guest',
+      airports: ['MAD', 'BCN'], // Acceso limitado a dos aeropuertos
+      level: 1
+    };
+    
+    setCurrentUser(guestUser);
+    localStorage.setItem('atcUser', JSON.stringify(guestUser));
+    setIsLoading(false);
+    navigate('/');
+  };
+
   const logout = () => {
     setCurrentUser(null);
     localStorage.removeItem('atcUser');
@@ -94,7 +114,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
   };
 
   return (
-    <AuthContext.Provider value={{ currentUser, isLoading, login, logout, error }}>
+    <AuthContext.Provider value={{ currentUser, isLoading, login, loginAsGuest, logout, error }}>
       {children}
     </AuthContext.Provider>
   );
