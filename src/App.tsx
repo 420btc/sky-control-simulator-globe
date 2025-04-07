@@ -9,6 +9,7 @@ import AirportControl from "./pages/AirportControl";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import FlightSimulator from "./pages/FlightSimulator";
 import { AuthProvider, useAuth } from "./components/Auth/AuthContext";
 
 const queryClient = new QueryClient();
@@ -47,6 +48,7 @@ const App = () => (
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/airport/:airportId" element={<ProtectedRoute><AirportControl /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/simulator/:flightId" element={<ProtectedRoute><FlightSimulator /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

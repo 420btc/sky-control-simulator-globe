@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 // Soluciona el problema con los iconos en React Leaflet
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+import { MapLayerControl } from './MapLayerControl';
 
 const DefaultIcon = new Icon({
   iconUrl: icon,
@@ -37,6 +38,7 @@ const WorldMap: React.FC<WorldMapProps> = ({
   const prevFlightsRef = useRef<Flight[]>([]);
   const navigate = useNavigate();
   const api = FlightApi.getInstance();
+  const [mapType, setMapType] = useState<'standard' | 'satellite'>('standard');
   
   useEffect(() => {
     // Iniciar la API y obtener datos iniciales
@@ -131,8 +133,8 @@ const WorldMap: React.FC<WorldMapProps> = ({
       <div className="flight-marker" style={rotationStyle}>
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
-          width="20" 
-          height="20" 
+          width="24" 
+          height="24" 
           viewBox="0 0 24 24" 
           fill={color} 
           stroke="#ffffff" 
@@ -140,7 +142,9 @@ const WorldMap: React.FC<WorldMapProps> = ({
           strokeLinecap="round" 
           strokeLinejoin="round"
         >
-          <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"></path>
+          <path d="M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2s10 4.477 10 10z" />
+          <path d="m14 8-3 3-3-3" />
+          <path d="M10 17V8" />
         </svg>
       </div>
     );
@@ -164,8 +168,16 @@ const WorldMap: React.FC<WorldMapProps> = ({
       style={{ height: '100%', width: '100%', borderRadius: '0.5rem' }}
       attributionControl={false}
     >
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      {mapType === 'standard' ? (
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      ) : (
+        <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
+      )}
+      
+      <MapLayerControl 
+        position="topright" 
+        mapType={mapType} 
+        onChangeMapType={(type) => setMapType(type)} 
       />
       
       {/* Aeropuertos */}
@@ -214,29 +226,22 @@ const WorldMap: React.FC<WorldMapProps> = ({
       {/* Vuelos */}
       {flights.map(flight => (
         <React.Fragment key={flight.id}>
-          <Marker 
-            position={[flight.position[1], flight.position[0]]}
-            icon={DefaultIcon}
-            opacity={0}
-          >
-            <Popup>
-              <div className="text-center">
-                <h3 className="font-bold">{flight.callsign}</h3>
-                <p className="text-sm">{flight.aircraft}</p>
-                <div className="grid grid-cols-2 gap-1 text-xs my-1">
-                  <div>Origen: <span className="font-bold">{flight.origin}</span></div>
-                  <div>Destino: <span className="font-bold">{flight.destination}</span></div>
-                  <div>Altitud: <span className="font-bold">{flight.altitude}00 ft</span></div>
-                  <div>Velocidad: <span className="font-bold">{flight.speed} kts</span></div>
-                </div>
-                <p className="text-xs">Estado: {
-                  flight.status === 'enroute' ? 'En ruta' :
-                  flight.status === 'landing' ? 'Aterrizando' :
-                  flight.status === 'takeoff' ? 'Despegando' : 'Programado'
-                }</p>
-              </div>
-            </Popup>
-          </Marker>
+          {/* Ruta del vuelo (ahora se revela gradualmente) */}
+          {flight.route && visibleRoutes[flight.id] && visibleRoutes[flight.id].length > 1 && (
+            <Polyline
+              positions={getVisibleRoutePath(flight)}
+              pathOptions={{ 
+                color: 
+                  flight.status === 'enroute' ? '#0057b7' :
+                  flight.status === 'landing' ? '#ffd700' :
+                  flight.status === 'takeoff' ? '#00a8e8' : 
+                  '#ffffff',
+                opacity: 0.6,
+                weight: 2,
+                dashArray: flight.status === 'scheduled' ? '5, 5' : undefined
+              }}
+            />
+          )}
           
           {/* Icono de avión personalizado */}
           <CircleMarker
@@ -263,23 +268,6 @@ const WorldMap: React.FC<WorldMapProps> = ({
             </Popup>
             {getFlightIcon(flight)}
           </CircleMarker>
-          
-          {/* Ruta del vuelo (ahora se revela gradualmente) */}
-          {flight.route && visibleRoutes[flight.id] && visibleRoutes[flight.id].length > 1 && (
-            <Polyline
-              positions={getVisibleRoutePath(flight)}
-              pathOptions={{ 
-                color: 
-                  flight.status === 'enroute' ? '#0057b7' :
-                  flight.status === 'landing' ? '#ffd700' :
-                  flight.status === 'takeoff' ? '#00a8e8' : 
-                  '#ffffff',
-                opacity: 0.6,
-                weight: 2,
-                dashArray: flight.status === 'scheduled' ? '5, 5' : undefined
-              }}
-            />
-          )}
         </React.Fragment>
       ))}
     </MapContainer>

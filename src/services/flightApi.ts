@@ -45,7 +45,18 @@ class FlightApi {
     { id: 'HND', name: 'Tokyo Haneda', iataCode: 'HND', position: [139.7798, 35.5494] as [number, number], runways: 4, traffic: 8 },
     { id: 'SYD', name: 'Sydney Kingsford Smith', iataCode: 'SYD', position: [151.1772, -33.9399] as [number, number], runways: 3, traffic: 6 },
     { id: 'GRU', name: 'São Paulo-Guarulhos', iataCode: 'GRU', position: [-46.4728, -23.4356] as [number, number], runways: 2, traffic: 7 },
-    { id: 'CPT', name: 'Cape Town International', iataCode: 'CPT', position: [18.6021, -33.9648] as [number, number], runways: 2, traffic: 5 }
+    { id: 'CPT', name: 'Cape Town International', iataCode: 'CPT', position: [18.6021, -33.9648] as [number, number], runways: 2, traffic: 5 },
+    // Nuevos aeropuertos añadidos
+    { id: 'MEX', name: 'Mexico City International', iataCode: 'MEX', position: [-99.072098, 19.4363] as [number, number], runways: 2, traffic: 7 },
+    { id: 'LAX', name: 'Los Angeles International', iataCode: 'LAX', position: [-118.4085, 33.9416] as [number, number], runways: 4, traffic: 9 },
+    { id: 'SFO', name: 'San Francisco International', iataCode: 'SFO', position: [-122.375, 37.6213] as [number, number], runways: 4, traffic: 8 },
+    { id: 'ORD', name: 'Chicago O\'Hare International', iataCode: 'ORD', position: [-87.9048, 41.9742] as [number, number], runways: 7, traffic: 9 },
+    { id: 'ATL', name: 'Hartsfield-Jackson Atlanta', iataCode: 'ATL', position: [-84.4277, 33.6367] as [number, number], runways: 5, traffic: 10 },
+    { id: 'PEK', name: 'Beijing Capital International', iataCode: 'PEK', position: [116.5978, 40.0799] as [number, number], runways: 3, traffic: 9 },
+    { id: 'ICN', name: 'Seoul Incheon International', iataCode: 'ICN', position: [126.4505, 37.4693] as [number, number], runways: 3, traffic: 8 },
+    { id: 'SIN', name: 'Singapore Changi', iataCode: 'SIN', position: [103.9915, 1.3644] as [number, number], runways: 3, traffic: 9 },
+    { id: 'BOM', name: 'Mumbai Chhatrapati Shivaji', iataCode: 'BOM', position: [72.8689, 19.0896] as [number, number], runways: 2, traffic: 7 },
+    { id: 'SYD', name: 'Sydney Kingsford Smith', iataCode: 'SYD', position: [151.1772, -33.9399] as [number, number], runways: 3, traffic: 7 }
   ];
 
   // Nombres de aerolíneas para generar call signs
@@ -59,7 +70,12 @@ class FlightApi {
     { code: 'AAL', name: 'American Airlines' },
     { code: 'DAL', name: 'Delta Air Lines' },
     { code: 'UAL', name: 'United Airlines' },
-    { code: 'THY', name: 'Turkish Airlines' }
+    { code: 'THY', name: 'Turkish Airlines' },
+    { code: 'ANA', name: 'All Nippon Airways' },
+    { code: 'QFA', name: 'Qantas' },
+    { code: 'CPA', name: 'Cathay Pacific' },
+    { code: 'SIA', name: 'Singapore Airlines' },
+    { code: 'KAL', name: 'Korean Air' }
   ];
 
   // Tipos de aviones para generar datos de vuelo
@@ -76,7 +92,7 @@ class FlightApi {
     });
 
     // Generamos vuelos iniciales
-    this.generateFlights(50);
+    this.generateFlights(80);
   }
 
   public static getInstance(): FlightApi {
@@ -130,6 +146,26 @@ class FlightApi {
       if (progress < 0.1) status = 'takeoff';
       if (progress > 0.9) status = 'landing';
 
+      // Crear ruta completa con waypoints intermedios
+      const numWaypoints = Math.floor(Math.random() * 3) + 3; // 3-5 waypoints
+      const route: [number, number][] = [origin.position];
+
+      // Generar waypoints intermedios con algo de variación
+      for (let j = 1; j < numWaypoints - 1; j++) {
+        const progressOnRoute = j / numWaypoints;
+        const waypoint = turf.along(line, length * progressOnRoute, { units: 'kilometers' });
+        
+        // Añadir algo de variación a la ruta
+        const offset = (Math.random() - 0.5) * 2; // -1 a 1
+        const bearing = (heading + 90) % 360; // Perpendicular al rumbo
+        const offsetPoint = turf.destination(waypoint, Math.abs(offset) * 100, offset > 0 ? bearing : (bearing + 180) % 360, { units: 'kilometers' });
+        
+        route.push([offsetPoint.geometry.coordinates[0], offsetPoint.geometry.coordinates[1]]);
+      }
+      
+      // Añadir el destino como punto final
+      route.push(destination.position);
+
       // Crear objeto de vuelo
       const flight: Flight = {
         id: `FL${i}`,
@@ -143,7 +179,7 @@ class FlightApi {
         position,
         status,
         eta,
-        route: [origin.position, position, destination.position]
+        route
       };
 
       this.flights.set(flight.id, flight);

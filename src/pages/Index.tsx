@@ -7,6 +7,9 @@ import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FlightApi from "@/services/flightApi";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { Flight } from "@/services/flightApi";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const { currentUser, isLoading } = useAuth();
@@ -15,6 +18,8 @@ const Index = () => {
     activePilots: 0,
     airports: 0
   });
+  const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Inicializar estadísticas
@@ -52,6 +57,18 @@ const Index = () => {
   if (!currentUser) {
     return <LoginForm />;
   }
+  
+  const handleFlightSelect = (flight: Flight) => {
+    setSelectedFlight(flight);
+  };
+  
+  const startFlightSimulation = () => {
+    if (selectedFlight) {
+      navigate(`/simulator/${selectedFlight.id}`);
+    } else {
+      toast.error("Por favor, selecciona un vuelo primero");
+    }
+  };
 
   // Si hay usuario autenticado, mostrar el mapa mundial
   return (
@@ -86,6 +103,7 @@ const Index = () => {
             <TabsList className="justify-start mx-4 mt-2">
               <TabsTrigger value="map">Mapa Mundial</TabsTrigger>
               <TabsTrigger value="flights">Vuelos Activos</TabsTrigger>
+              <TabsTrigger value="simulator">Simulador</TabsTrigger>
               <TabsTrigger value="guide">Guía del Controlador</TabsTrigger>
             </TabsList>
             
@@ -110,7 +128,15 @@ const Index = () => {
                 <h2 className="text-lg font-semibold mb-3 text-atc-blue">Vuelos en curso</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {FlightApi.getInstance().getAllFlights().map((flight) => (
-                    <div key={flight.id} className="bg-white p-3 rounded-md shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+                    <div 
+                      key={flight.id} 
+                      className={`bg-white p-3 rounded-md shadow-sm border ${
+                        selectedFlight?.id === flight.id 
+                          ? 'border-atc-blue ring-2 ring-atc-blue/20' 
+                          : 'border-gray-200 hover:shadow-md'
+                      } transition-all cursor-pointer`}
+                      onClick={() => handleFlightSelect(flight)}
+                    >
                       <div className="flex justify-between items-start">
                         <div className="font-bold">{flight.callsign}</div>
                         <div className={`text-xs px-2 py-0.5 rounded-full ${
@@ -141,6 +167,67 @@ const Index = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="simulator" className="flex-1 p-4 pt-2">
+              <div className="h-full overflow-auto bg-gray-50 rounded-lg p-4">
+                <div className="max-w-3xl mx-auto">
+                  <div className="bg-white p-6 rounded-lg shadow-sm">
+                    <h2 className="text-xl font-bold text-atc-blue mb-4">Simulador de vuelo</h2>
+                    
+                    <p className="text-gray-700 mb-6">
+                      ¡Experimenta la emoción de volar! Selecciona un vuelo y prueba nuestro simulador para controlar un avión siguiendo la ruta real de un vuelo.
+                    </p>
+                    
+                    <div className="border-t border-b border-gray-200 py-4 my-4">
+                      <h3 className="font-semibold text-lg mb-2">Cómo funciona:</h3>
+                      <ol className="list-decimal list-inside space-y-2 text-gray-700">
+                        <li>Selecciona un vuelo en la pestaña "Vuelos Activos"</li>
+                        <li>Haz clic en "Iniciar simulación"</li>
+                        <li>Controla el avión con las teclas WASD</li>
+                        <li>Sigue la ruta marcada para completar el vuelo</li>
+                      </ol>
+                    </div>
+                    
+                    <div className="bg-blue-50 p-4 rounded-md border border-blue-100 mb-6">
+                      <h3 className="font-semibold">Instrucciones de control:</h3>
+                      <ul className="mt-2 space-y-1 text-gray-700">
+                        <li><span className="font-medium">W</span>: Avanzar</li>
+                        <li><span className="font-medium">S</span>: Reducir velocidad</li>
+                        <li><span className="font-medium">A</span>: Girar a la izquierda</li>
+                        <li><span className="font-medium">D</span>: Girar a la derecha</li>
+                      </ul>
+                    </div>
+                    
+                    <div className="mt-4">
+                      {selectedFlight ? (
+                        <div className="p-4 border border-green-100 bg-green-50 rounded-md mb-4">
+                          <p className="font-semibold text-green-800">Vuelo seleccionado: {selectedFlight.callsign}</p>
+                          <p className="text-sm text-green-700">
+                            {selectedFlight.origin} → {selectedFlight.destination}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="p-4 border border-yellow-100 bg-yellow-50 rounded-md mb-4">
+                          <p className="text-yellow-800">
+                            No has seleccionado ningún vuelo. Visita la pestaña "Vuelos Activos" para elegir uno.
+                          </p>
+                        </div>
+                      )}
+                      
+                      <div className="flex justify-end">
+                        <Button
+                          onClick={startFlightSimulation}
+                          disabled={!selectedFlight}
+                          className="bg-atc-blue hover:bg-atc-lightBlue text-white"
+                        >
+                          Iniciar simulación
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </TabsContent>

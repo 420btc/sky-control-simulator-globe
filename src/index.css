@@ -111,6 +111,10 @@
   animation: pulse 2s infinite;
 }
 
+.player-plane {
+  transition: all 0.2s ease;
+}
+
 @keyframes pulse {
   0% {
     box-shadow: 0 0 0 0 rgba(0, 87, 183, 0.4);
@@ -122,3 +126,4 @@
     box-shadow: 0 0 0 0 rgba(0, 87, 183, 0);
   }
 }
+
