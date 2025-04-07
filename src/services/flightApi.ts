@@ -35,17 +35,17 @@ class FlightApi {
   private updateInterval: number | null = null;
 
   // Aeropuertos principales
-  private readonly MAIN_AIRPORTS = [
-    { id: 'MAD', name: 'Adolfo Suárez Madrid-Barajas', iataCode: 'MAD', position: [-3.5667, 40.4667], runways: 4, traffic: 8 },
-    { id: 'BCN', name: 'Barcelona-El Prat', iataCode: 'BCN', position: [2.0833, 41.2969], runways: 3, traffic: 7 },
-    { id: 'LHR', name: 'London Heathrow', iataCode: 'LHR', position: [-0.4614, 51.4700], runways: 2, traffic: 10 },
-    { id: 'CDG', name: 'Paris Charles de Gaulle', iataCode: 'CDG', position: [2.5478, 49.0097], runways: 4, traffic: 9 },
-    { id: 'JFK', name: 'New York John F. Kennedy', iataCode: 'JFK', position: [-73.7781, 40.6413], runways: 4, traffic: 8 },
-    { id: 'DXB', name: 'Dubai International', iataCode: 'DXB', position: [55.3644, 25.2528], runways: 2, traffic: 9 },
-    { id: 'HND', name: 'Tokyo Haneda', iataCode: 'HND', position: [139.7798, 35.5494], runways: 4, traffic: 8 },
-    { id: 'SYD', name: 'Sydney Kingsford Smith', iataCode: 'SYD', position: [151.1772, -33.9399], runways: 3, traffic: 6 },
-    { id: 'GRU', name: 'São Paulo-Guarulhos', iataCode: 'GRU', position: [-46.4728, -23.4356], runways: 2, traffic: 7 },
-    { id: 'CPT', name: 'Cape Town International', iataCode: 'CPT', position: [18.6021, -33.9648], runways: 2, traffic: 5 }
+  private readonly MAIN_AIRPORTS: Airport[] = [
+    { id: 'MAD', name: 'Adolfo Suárez Madrid-Barajas', iataCode: 'MAD', position: [-3.5667, 40.4667] as [number, number], runways: 4, traffic: 8 },
+    { id: 'BCN', name: 'Barcelona-El Prat', iataCode: 'BCN', position: [2.0833, 41.2969] as [number, number], runways: 3, traffic: 7 },
+    { id: 'LHR', name: 'London Heathrow', iataCode: 'LHR', position: [-0.4614, 51.4700] as [number, number], runways: 2, traffic: 10 },
+    { id: 'CDG', name: 'Paris Charles de Gaulle', iataCode: 'CDG', position: [2.5478, 49.0097] as [number, number], runways: 4, traffic: 9 },
+    { id: 'JFK', name: 'New York John F. Kennedy', iataCode: 'JFK', position: [-73.7781, 40.6413] as [number, number], runways: 4, traffic: 8 },
+    { id: 'DXB', name: 'Dubai International', iataCode: 'DXB', position: [55.3644, 25.2528] as [number, number], runways: 2, traffic: 9 },
+    { id: 'HND', name: 'Tokyo Haneda', iataCode: 'HND', position: [139.7798, 35.5494] as [number, number], runways: 4, traffic: 8 },
+    { id: 'SYD', name: 'Sydney Kingsford Smith', iataCode: 'SYD', position: [151.1772, -33.9399] as [number, number], runways: 3, traffic: 6 },
+    { id: 'GRU', name: 'São Paulo-Guarulhos', iataCode: 'GRU', position: [-46.4728, -23.4356] as [number, number], runways: 2, traffic: 7 },
+    { id: 'CPT', name: 'Cape Town International', iataCode: 'CPT', position: [18.6021, -33.9648] as [number, number], runways: 2, traffic: 5 }
   ];
 
   // Nombres de aerolíneas para generar call signs
